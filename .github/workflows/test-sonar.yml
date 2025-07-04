@@ -16,7 +16,7 @@ jobs:
         run: |
           cat > sonar-project.properties << EOF
           # Configuración del proyecto para análisis de SonarQube
-          sonar.projectKey=tests-self-hosted-runner
+          sonar.projectKey=test-self-hosted-runner
           sonar.projectName=Tests Self Hosted Runner
           sonar.projectVersion=1.0
           
