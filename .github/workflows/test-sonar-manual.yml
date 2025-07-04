@@ -1,0 +1,101 @@
+# Workflow alternativo con instalación manual de SonarScanner
+name: Test SonarQube Manual
+on:
+  workflow_dispatch:
+
+jobs:
+  sonar:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Install system dependencies
+        run: |
+          echo "Installing system dependencies..."
+          if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y unzip wget curl openjdk-17-jre-headless
+          elif command -v yum >/dev/null 2>&1; then
+            sudo yum install -y unzip wget curl java-17-openjdk-headless
+          elif command -v apk >/dev/null 2>&1; then
+            sudo apk add --no-cache unzip wget curl openjdk17-jre-headless
+          else
+            echo "Package manager not found. Installing manually..."
+          fi
+        shell: bash
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Cache SonarScanner
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar-scanner-${{ hashFiles('**/sonar-project.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-sonar-scanner-
+      
+      - name: Download and Install SonarScanner
+        run: |
+          SONAR_SCANNER_VERSION="7.1.0.4889"
+          SONAR_SCANNER_HOME="/tmp/sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64"
+          
+          if [ ! -d "$SONAR_SCANNER_HOME" ]; then
+            echo "Downloading SonarScanner..."
+            cd /tmp
+            wget -q "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip"
+            unzip -q "sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip"
+            rm "sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip"
+          else
+            echo "SonarScanner already exists"
+          fi
+          
+          echo "SONAR_SCANNER_HOME=$SONAR_SCANNER_HOME" >> $GITHUB_ENV
+          echo "$SONAR_SCANNER_HOME/bin" >> $GITHUB_PATH
+        shell: bash
+      
+      - name: Verify SonarScanner installation
+        run: |
+          sonar-scanner --version
+        shell: bash
+      
+      - name: Create sonar-project.properties if not exists
+        run: |
+          if [ ! -f "sonar-project.properties" ]; then
+            echo "Creating sonar-project.properties..."
+            cat > sonar-project.properties << EOF
+          sonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+          sonar.projectName=${{ github.event.repository.name }}
+          sonar.projectVersion=1.0
+          sonar.sources=.
+          sonar.exclusions=**/*.xml,**/*.yml,**/*.yaml,**/*.json,**/node_modules/**,**/dist/**,**/build/**,**/.git/**,**/.github/**,**/target/**
+          sonar.sourceEncoding=UTF-8
+          EOF
+          fi
+          
+          echo "Sonar project configuration:"
+          cat sonar-project.properties
+        shell: bash
+      
+      - name: Run SonarQube analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          echo "Running SonarQube analysis..."
+          sonar-scanner \
+            -Dsonar.host.url="${SONAR_HOST_URL}" \
+            -Dsonar.token="${SONAR_TOKEN}" \
+            -Dsonar.projectKey="${{ github.repository_owner }}_${{ github.event.repository.name }}" \
+            -Dsonar.projectName="${{ github.event.repository.name }}" \
+            -Dsonar.projectVersion="1.0" \
+            -Dsonar.sources="." \
+            -Dsonar.exclusions="**/*.xml,**/*.yml,**/*.yaml,**/*.json,**/node_modules/**,**/dist/**,**/build/**,**/.git/**,**/.github/**,**/target/**" \
+            -Dsonar.sourceEncoding="UTF-8"
+        shell: bash

@@ -9,7 +9,28 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para obtener el historial completo del repositorio
       
+      - name: Create SonarQube properties file
+        run: |
+          cat > sonar-project.properties << EOF
+          # Configuración del proyecto para análisis de SonarQube
+          sonar.projectKey=tests-self-hosted-runner
+          sonar.projectName=Tests Self Hosted Runner
+          sonar.projectVersion=1.0
+          
+          # Directorios a analizar
+          sonar.sources=code-testing
+          
+          # Configuración específica para JavaScript
+          sonar.sourceEncoding=UTF-8
+          
+          # Exclusiones
+          sonar.exclusions=**/node_modules/**,**/*.test.js,**/*.spec.js
+          EOF
+        shell: bash
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5.2.0
         env:

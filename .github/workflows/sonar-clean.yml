@@ -1,0 +1,56 @@
+# Workflow simplificado que asume dependencias instaladas
+name: SonarQube Analysis (Clean)
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+      
+      - name: Verify dependencies
+        run: |
+          echo "Checking required dependencies..."
+          commands=("java" "unzip" "wget" "curl")
+          missing=()
+          
+          for cmd in "${commands[@]}"; do
+            if ! command -v "$cmd" >/dev/null 2>&1; then
+              missing+=("$cmd")
+            else
+              echo "✅ $cmd: $(command -v $cmd)"
+            fi
+          done
+          
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "❌ Missing dependencies: ${missing[*]}"
+            echo "Run the setup script: ./setup-runner-dependencies.sh"
+            exit 1
+          fi
+          
+          echo "✅ All dependencies found"
+        shell: bash
+      
+      - name: Run SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.projectName=${{ github.event.repository.name }}
+            -Dsonar.projectVersion=1.0
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/*.xml,**/*.yml,**/*.yaml,**/*.json,**/node_modules/**,**/dist/**,**/build/**,**/.git/**,**/.github/**,**/target/**,**/coverage/**,**/*.log
+            -Dsonar.sourceEncoding=UTF-8
