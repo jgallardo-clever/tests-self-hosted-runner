@@ -1,0 +1,17 @@
+# Workflow que utiliza SonarQube para analizar el código Javascript del directorio code-testing y generar un informe de calidad.
+name: Test SonarQube
+on:
+  workflow_dispatch:
+
+jobs:
+  sonar:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

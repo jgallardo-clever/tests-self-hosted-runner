@@ -1,0 +1,34 @@
+# Variables de entorno (contiene contraseñas)
+.env*
+.env.local
+.env.production
+
+# Certificados SSL y configuración sensible
+certbot/
+nginx/ssl/
+*.pem
+*.key
+*.crt
+
+# Logs de Docker y Nginx
+*.log
+logs/
+
+# Archivos temporales
+.DS_Store
+Thumbs.db
+
+# Datos de volúmenes locales (si se mapean localmente)
+data/
+
+# Archivos de respaldo
+*.bak
+*.backup
+backup_sonar.sql
+
+# Archivos de IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
