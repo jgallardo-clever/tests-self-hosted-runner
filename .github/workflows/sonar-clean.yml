@@ -2,10 +2,6 @@
 name: SonarQube Analysis (Clean)
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
   sonarqube:
