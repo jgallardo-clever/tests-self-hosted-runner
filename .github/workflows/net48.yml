@@ -11,28 +11,37 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Check vswhere.exe exists
+    - name: Setup MSBuild PATH
       run: |
-        if (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe") {
-          Write-Host "vswhere.exe found at expected location"
-          Get-ItemProperty "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" | Select-Object Name, Length, LastWriteTime
+        # Usar vswhere.exe para encontrar MSBuild
+        $vswhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+        if (Test-Path $vswhere) {
+          Write-Host "Using vswhere.exe to find MSBuild..."
+          $vsPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+          if ($vsPath) {
+            $msbuildPath = Join-Path $vsPath "MSBuild\Current\Bin"
+            if (Test-Path "$msbuildPath\MSBuild.exe") {
+              Write-Host "Found MSBuild at: $msbuildPath"
+              echo "$msbuildPath" >> $env:GITHUB_PATH
+              Write-Host "MSBuild added to PATH"
+            } else {
+              Write-Error "MSBuild not found at expected location: $msbuildPath"
+              exit 1
+            }
+          } else {
+            Write-Error "Visual Studio installation not found"
+            exit 1
+          }
         } else {
-          Write-Host "vswhere.exe NOT found at expected location"
-          Write-Host "Searching for vswhere.exe..."
-          Get-ChildItem -Path "C:\Program Files*" -Name "vswhere.exe" -Recurse -ErrorAction SilentlyContinue
+          Write-Error "vswhere.exe not found"
+          exit 1
         }
       shell: powershell
-
-    # - name: Setup MSBuild
-    #   uses: microsoft/setup-msbuild@v2
-    #   with:
-    #     vswhere-path: 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
       
-    # - name: Setup NuGet
-    #   uses: NuGet/setup-nuget@v1.2.0
-      
-    # - name: Restore NuGet packages
-    #   run: nuget restore test-net48/TestNet48.csproj
+    - name: Verify MSBuild
+      run: |
+        msbuild -version
+      shell: powershell
       
     - name: Build project
       run: msbuild test-net48/TestNet48.csproj /p:Configuration=Release /p:Platform="Any CPU"
