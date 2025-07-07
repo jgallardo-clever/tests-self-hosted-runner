@@ -46,7 +46,7 @@ jobs:
       
     - name: Build project
       run: |
-        & "$env:MSBUILD_PATH" test-net48/TestNet48.csproj /p:Configuration=Release /p:Platform="Any CPU"
+        & "$env:MSBUILD_PATH" test-net48/TestNet48.csproj /p:Configuration=Release /p:Platform=AnyCPU
       shell: powershell
       
     - name: List build output
