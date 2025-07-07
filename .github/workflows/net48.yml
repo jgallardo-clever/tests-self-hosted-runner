@@ -11,36 +11,31 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Find and Setup MSBuild
+    - name: Check vswhere.exe exists
       run: |
-        # Usar vswhere.exe para encontrar MSBuild
-        $vswhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-        if (Test-Path $vswhere) {
-          Write-Host "Using vswhere.exe to find MSBuild..."
-          $vsPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
-          if ($vsPath) {
-            $msbuildPath = Join-Path $vsPath "MSBuild\Current\Bin\MSBuild.exe"
-            if (Test-Path $msbuildPath) {
-              Write-Host "Found MSBuild at: $msbuildPath"
-              echo "MSBUILD_PATH=$msbuildPath" >> $env:GITHUB_ENV
-            } else {
-              Write-Error "MSBuild not found at expected location: $msbuildPath"
-              exit 1
-            }
-          } else {
-            Write-Error "Visual Studio installation not found"
-            exit 1
-          }
+        if (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe") {
+          Write-Host "vswhere.exe found at expected location"
+          Get-ItemProperty "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" | Select-Object Name, Length, LastWriteTime
         } else {
-          Write-Error "vswhere.exe not found"
-          exit 1
+          Write-Host "vswhere.exe NOT found at expected location"
+          Write-Host "Searching for vswhere.exe..."
+          Get-ChildItem -Path "C:\Program Files*" -Name "vswhere.exe" -Recurse -ErrorAction SilentlyContinue
         }
       shell: powershell
+
+    # - name: Setup MSBuild
+    #   uses: microsoft/setup-msbuild@v2
+    #   with:
+    #     vswhere-path: 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
+      
+    # - name: Setup NuGet
+    #   uses: NuGet/setup-nuget@v1.2.0
+      
+    # - name: Restore NuGet packages
+    #   run: nuget restore test-net48/TestNet48.csproj
       
     - name: Build project
-      run: |
-        & "$env:MSBUILD_PATH" test-net48/TestNet48.csproj /p:Configuration=Release /p:Platform="Any CPU"
-      shell: powershell
+      run: msbuild test-net48/TestNet48.csproj /p:Configuration=Release /p:Platform="Any CPU"
       
     - name: List build output
       run: dir test-net48/bin/Release/
