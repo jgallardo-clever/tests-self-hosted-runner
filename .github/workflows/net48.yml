@@ -1,0 +1,37 @@
+name: .NET Framework 4.8 Build and Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.2.0
+      
+    - name: Restore NuGet packages
+      run: nuget restore test-net48/TestNet48.csproj
+      
+    - name: Build project
+      run: msbuild test-net48/TestNet48.csproj /p:Configuration=Release /p:Platform="Any CPU"
+      
+    - name: List build output
+      run: dir test-net48/bin/Release/
+      
+    - name: Run application
+      run: test-net48/bin/Release/TestNet48.exe
+      
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: net48-build-artifacts
+        path: test-net48/bin/Release/
+        retention-days: 30
