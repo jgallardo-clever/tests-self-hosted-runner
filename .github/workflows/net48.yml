@@ -11,6 +11,18 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
+    - name: Check vswhere.exe exists
+      run: |
+        if (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe") {
+          Write-Host "vswhere.exe found at expected location"
+          Get-ItemProperty "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" | Select-Object Name, Length, LastWriteTime
+        } else {
+          Write-Host "vswhere.exe NOT found at expected location"
+          Write-Host "Searching for vswhere.exe..."
+          Get-ChildItem -Path "C:\Program Files*" -Name "vswhere.exe" -Recurse -ErrorAction SilentlyContinue
+        }
+      shell: powershell
+
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
       with:
