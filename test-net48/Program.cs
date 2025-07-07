@@ -6,9 +6,10 @@ namespace TestNet48
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hola desde .NET Framework 4.8!");
-            Console.WriteLine("Proyecto de prueba simple");
-            Console.WriteLine("Compilacion exitosa: " + DateTime.Now.ToString());
+            Console.WriteLine("¡Hola desde .NET Framework!");
+            Console.WriteLine("Compilación exitosa - " + DateTime.Now.ToString());
+            Console.WriteLine("Presiona cualquier tecla para continuar...");
+            Console.ReadKey();
         }
     }
 }
