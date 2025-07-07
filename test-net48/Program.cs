@@ -8,8 +8,7 @@ namespace TestNet48
         {
             Console.WriteLine("¡Hola desde .NET Framework!");
             Console.WriteLine("Compilación exitosa - " + DateTime.Now.ToString());
-            Console.WriteLine("Presiona cualquier tecla para continuar...");
-            Console.ReadKey();
+            Console.WriteLine("Proyecto ejecutado correctamente en GitHub Actions");
         }
     }
 }
