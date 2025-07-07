@@ -28,10 +28,3 @@ jobs:
       
     - name: Run application
       run: test-net48/bin/Release/TestNet48.exe
-      
-    - name: Archive build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: net48-build-artifacts
-        path: test-net48/bin/Release/
-        retention-days: 30
