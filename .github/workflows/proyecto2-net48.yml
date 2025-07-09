@@ -1,0 +1,73 @@
+name: Proyecto2 .NET Framework 4.8 Build and Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Verify MSBuild
+      run: |
+        msbuild -version
+      shell: powershell
+      
+    - name: Clean previous builds
+      run: |
+        if (Test-Path "proyecto2-net48\bin") {
+          Remove-Item -Recurse -Force "proyecto2-net48\bin"
+          Write-Host "Removed previous bin directory"
+        }
+        if (Test-Path "proyecto2-net48\obj") {
+          Remove-Item -Recurse -Force "proyecto2-net48\obj"
+          Write-Host "Removed previous obj directory"
+        }
+      shell: powershell
+      
+    - name: Build project (Debug)
+      run: |
+        msbuild proyecto2-net48/Proyecto2Net48.csproj /p:Configuration=Debug /p:Platform=AnyCPU /verbosity:minimal
+      shell: powershell
+      
+    - name: Build project (Release)
+      run: |
+        msbuild proyecto2-net48/Proyecto2Net48.csproj /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal
+      shell: powershell
+      
+    - name: List build outputs
+      run: |
+        Write-Host "=== Debug Build Output ==="
+        if (Test-Path "proyecto2-net48\bin\Debug") {
+          Get-ChildItem "proyecto2-net48\bin\Debug" -Recurse | ForEach-Object {
+            Write-Host $_.FullName
+          }
+        } else {
+          Write-Host "Debug directory not found"
+        }
+        
+        Write-Host "`=== Release Build Output ==="
+        if (Test-Path "proyecto2-net48\bin\Release") {
+          Get-ChildItem "proyecto2-net48\bin\Release" -Recurse | ForEach-Object {
+            Write-Host $_.FullName
+          }
+        } else {
+          Write-Host "Release directory not found"
+        }
+      shell: powershell
+      
+    - name: Test Debug build
+      run: |
+        Write-Host "=== Testing Debug Build ==="
+        & "proyecto2-net48\bin\Debug\Proyecto2Net48.exe"
+      shell: powershell
+      
+    - name: Test Release build
+      run: |
+        Write-Host "=== Testing Release Build ==="
+        & "proyecto2-net48\bin\Release\Proyecto2Net48.exe"
+      shell: powershell
+      
