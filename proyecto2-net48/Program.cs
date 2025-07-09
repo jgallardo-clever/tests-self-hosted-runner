@@ -35,8 +35,6 @@ namespace Proyecto2Net48
             Console.WriteLine("=== COMPILACIÓN Y EJECUCIÓN EXITOSA ===");
             Console.WriteLine("El proyecto se ha compilado y ejecutado correctamente en el self-hosted runner");
             
-            Console.WriteLine("\nPresiona cualquier tecla para continuar...");
-            Console.ReadKey();
         }
     }
 }
