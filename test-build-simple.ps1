@@ -6,9 +6,9 @@ param(
     [string]$Configuration = "Release"
 )
 
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "Test Build Simple - Windows Server 2022" -ForegroundColor Cyan  
-Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "============================================"
+Write-Host "Test Build Simple - Windows Server 2022"
+Write-Host "============================================"
 Write-Host ""
 
 Set-Location $PSScriptRoot
@@ -23,53 +23,53 @@ $requiredFiles = @(
     "calculadora-web\Properties\AssemblyInfo.cs"
 )
 
-Write-Host "📋 Verificando archivos fuente..." -ForegroundColor Yellow
+Write-Host "📋 Verificando archivos fuente..."
 foreach ($file in $requiredFiles) {
     if (Test-Path $file) {
-        Write-Host "   ✅ $file" -ForegroundColor Green
+        Write-Host "   ✅ $file"
     } else {
-        Write-Host "   ❌ $file - FALTANTE" -ForegroundColor Red
+        Write-Host "   ❌ $file - FALTANTE"
         exit 1
     }
 }
 
 # Limpiar build anterior
 Write-Host ""
-Write-Host "🧹 Limpiando build anterior..." -ForegroundColor Yellow
+Write-Host "🧹 Limpiando build anterior..."
 @("calculadora-web\bin", "calculadora-web\obj") | ForEach-Object {
     if (Test-Path $_) {
         Remove-Item $_ -Recurse -Force
-        Write-Host "   Limpiado: $_" -ForegroundColor Gray
+        Write-Host "   Limpiado: $_"
     }
 }
 
 # Test 1: Proyecto principal
 Write-Host ""
-Write-Host "🔨 Test 1: Proyecto principal..." -ForegroundColor Yellow
+Write-Host "🔨 Test 1: Proyecto principal..."
 $result1 = & msbuild "calculadora-web\CalculadoraWeb.csproj" /p:Configuration=$Configuration /p:Platform="Any CPU" /target:Build /verbosity:minimal /nologo 2>&1
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "   ✅ Proyecto principal: EXITOSO" -ForegroundColor Green
+    Write-Host "   ✅ Proyecto principal: EXITOSO"
     $method = "Principal"
 } else {
-    Write-Host "   ❌ Proyecto principal: FALLÓ" -ForegroundColor Red
-    Write-Host "   Salida: $result1" -ForegroundColor Gray
+    Write-Host "   ❌ Proyecto principal: FALLÓ"
+    Write-Host "   Salida: $result1"
     
     # Test 2: Proyecto simplificado
     Write-Host ""
-    Write-Host "🔨 Test 2: Proyecto simplificado..." -ForegroundColor Yellow
+    Write-Host "🔨 Test 2: Proyecto simplificado..."
     $result2 = & msbuild "calculadora-web\CalculadoraWeb-Simple.csproj" /p:Configuration=$Configuration /p:Platform="Any CPU" /target:Build /verbosity:minimal /nologo 2>&1
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "   ✅ Proyecto simplificado: EXITOSO" -ForegroundColor Green
+        Write-Host "   ✅ Proyecto simplificado: EXITOSO"
         $method = "Simplificado"
     } else {
-        Write-Host "   ❌ Proyecto simplificado: FALLÓ" -ForegroundColor Red
-        Write-Host "   Salida: $result2" -ForegroundColor Gray
+        Write-Host "   ❌ Proyecto simplificado: FALLÓ"
+        Write-Host "   Salida: $result2"
         
         # Test 3: Compilación directa
         Write-Host ""
-        Write-Host "🔨 Test 3: Compilación directa con csc.exe..." -ForegroundColor Yellow
+        Write-Host "🔨 Test 3: Compilación directa con csc.exe..."
         
         $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
         if (!(Test-Path $cscPath)) {
@@ -77,7 +77,7 @@ if ($LASTEXITCODE -eq 0) {
         }
         
         if (Test-Path $cscPath) {
-            Write-Host "   Compilador encontrado: $cscPath" -ForegroundColor Gray
+            Write-Host "   Compilador encontrado: $cscPath"
             
             # Crear directorio bin
             New-Item -ItemType Directory -Path "calculadora-web\bin" -Force | Out-Null
@@ -101,17 +101,17 @@ if ($LASTEXITCODE -eq 0) {
             $result3 = & $cscPath /target:library /out:"calculadora-web\bin\CalculadoraWeb.dll" $refArgs "calculadora-web\App_Code\Calculator.cs" "calculadora-web\Default.aspx.cs" "calculadora-web\Default.aspx.designer.cs" "calculadora-web\Properties\AssemblyInfo.cs" 2>&1
             
             if ($LASTEXITCODE -eq 0) {
-                Write-Host "   ✅ Compilación directa: EXITOSA" -ForegroundColor Green
+                Write-Host "   ✅ Compilación directa: EXITOSA"
                 $method = "Directo (csc.exe)"
             } else {
-                Write-Host "   ❌ Compilación directa: FALLÓ" -ForegroundColor Red
-                Write-Host "   Salida: $result3" -ForegroundColor Gray
+                Write-Host "   ❌ Compilación directa: FALLÓ"
+                Write-Host "   Salida: $result3"
                 Write-Host ""
-                Write-Host "❌ TODOS LOS MÉTODOS DE COMPILACIÓN FALLARON" -ForegroundColor Red
+                Write-Host "❌ TODOS LOS MÉTODOS DE COMPILACIÓN FALLARON"
                 exit 1
             }
         } else {
-            Write-Host "   ❌ Compilador csc.exe no encontrado" -ForegroundColor Red
+            Write-Host "   ❌ Compilador csc.exe no encontrado"
             exit 1
         }
     }
@@ -119,23 +119,23 @@ if ($LASTEXITCODE -eq 0) {
 
 # Verificar resultado
 Write-Host ""
-Write-Host "📦 Verificando resultado..." -ForegroundColor Yellow
+Write-Host "📦 Verificando resultado..."
 if (Test-Path "calculadora-web\bin\CalculadoraWeb.dll") {
     $dll = Get-Item "calculadora-web\bin\CalculadoraWeb.dll"
-    Write-Host "   ✅ DLL generada: $($dll.Length) bytes" -ForegroundColor Green
-    Write-Host "   📅 Fecha: $($dll.LastWriteTime)" -ForegroundColor Gray
+    Write-Host "   ✅ DLL generada: $($dll.Length) bytes"
+    Write-Host "   📅 Fecha: $($dll.LastWriteTime)"
 } else {
-    Write-Host "   ❌ DLL no encontrada" -ForegroundColor Red
+    Write-Host "   ❌ DLL no encontrada"
     exit 1
 }
 
 Write-Host ""
-Write-Host "============================================" -ForegroundColor Green
-Write-Host "        ✅ TEST BUILD EXITOSO" -ForegroundColor Green
-Write-Host "============================================" -ForegroundColor Green
+Write-Host "============================================"
+Write-Host "        ✅ TEST BUILD EXITOSO"
+Write-Host "============================================"
 Write-Host ""
-Write-Host "🎯 Método utilizado: $method" -ForegroundColor White
-Write-Host "📁 DLL ubicada en: calculadora-web\bin\CalculadoraWeb.dll" -ForegroundColor Gray
+Write-Host "🎯 Método utilizado: $method"
+Write-Host "📁 DLL ubicada en: calculadora-web\bin\CalculadoraWeb.dll"
 Write-Host ""
-Write-Host "🚀 Ejecuta el workflow de GitHub Actions para desplegar en IIS" -ForegroundColor Cyan
+Write-Host "🚀 Ejecuta el workflow de GitHub Actions para desplegar en IIS"
 Write-Host ""
