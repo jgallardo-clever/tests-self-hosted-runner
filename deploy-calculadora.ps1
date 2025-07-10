@@ -177,12 +177,17 @@ if (!(Test-Path $IISPath)) {
 }
 
 # Crear backup si se solicita
-if ($CreateBackup -and (Test-Path $IISPath) -and (Get-ChildItem $IISPath | Measure-Object).Count -gt 0) {
-    $backupPath = "C:\inetpub\backups\calculadora-web-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
-    Write-Host "   Creando backup en: $backupPath" -ForegroundColor Gray
-    New-Item -ItemType Directory -Force -Path (Split-Path $backupPath) | Out-Null
-    Copy-Item -Path $IISPath -Destination $backupPath -Recurse -Force
-    Write-Host "   ✅ Backup creado exitosamente" -ForegroundColor Green
+if ($CreateBackup -and (Test-Path $IISPath)) {
+    $existingFiles = Get-ChildItem $IISPath -ErrorAction SilentlyContinue
+    if ($existingFiles -and ($existingFiles | Measure-Object).Count -gt 0) {
+        $backupPath = "C:\inetpub\backups\calculadora-web-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        Write-Host "   Creando backup en: $backupPath" -ForegroundColor Gray
+        New-Item -ItemType Directory -Force -Path (Split-Path $backupPath) | Out-Null
+        Copy-Item -Path $IISPath -Destination $backupPath -Recurse -Force
+        Write-Host "   ✅ Backup creado exitosamente" -ForegroundColor Green
+    } else {
+        Write-Host "   📁 Directorio existe pero está vacío, no se requiere backup" -ForegroundColor Gray
+    }
 }
 
 Write-Host ""

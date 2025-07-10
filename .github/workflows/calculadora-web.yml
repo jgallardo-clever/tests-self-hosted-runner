@@ -154,17 +154,22 @@ jobs:
           echo "Directorio de backups creado: $backupDir"
         }
         
-        # Crear backup de la aplicación actual si existe
-        if (Test-Path $iisPath -and (Get-ChildItem $iisPath -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0) {
-          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-          $backupPath = "$backupDir\calculadora-web-$timestamp"
-          
-          Copy-Item -Path $iisPath -Destination $backupPath -Recurse -Force
-          echo "✅ Backup creado: $backupPath"
-          
-          # Limpiar el directorio actual (mantener estructura)
-          Get-ChildItem $iisPath -Recurse | Remove-Item -Force -Recurse
-          echo "✅ Directorio IIS limpiado"
+        # Crear backup de la aplicación actual si existe y tiene contenido
+        if (Test-Path $iisPath) {
+          $existingFiles = Get-ChildItem $iisPath -ErrorAction SilentlyContinue
+          if ($existingFiles -and ($existingFiles | Measure-Object).Count -gt 0) {
+            $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+            $backupPath = "$backupDir\calculadora-web-$timestamp"
+            
+            Copy-Item -Path $iisPath -Destination $backupPath -Recurse -Force
+            echo "✅ Backup creado: $backupPath"
+            
+            # Limpiar el directorio actual (mantener estructura)
+            Get-ChildItem $iisPath -Recurse | Remove-Item -Force -Recurse
+            echo "✅ Directorio IIS limpiado"
+          } else {
+            echo "📁 Directorio IIS existe pero está vacío, no se requiere backup"
+          }
         }
         
         # Crear directorio de destino si no existe
