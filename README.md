@@ -1,6 +1,13 @@
 # Tests Self-Hosted Runner
 
-Este proyecto contiene la configuración de SonarQube usando Docker Compose para análisis de código estático.
+Este proyecto contiene la configuración de SonarQube usando Docker Compose para análisis de código estático, además de proyectos de ejemplo en .NET Framework 4.8, incluyendo una aplicación web de calculadora.
+
+## 📦 Proyectos Incluidos
+
+- **SonarQube**: Configuración con Docker Compose para análisis de código
+- **test-net48/**: Aplicación de consola .NET Framework 4.8 de ejemplo
+- **proyecto2-net48/**: Proyecto adicional .NET Framework 4.8
+- **calculadora-web/**: 🆕 Aplicación web ASP.NET con calculadora para IIS
 
 ## 🚀 Inicio Rápido
 
@@ -214,3 +221,92 @@ Si prefieres usar tus propios certificados:
 1. Coloca tus certificados en `nginx/ssl/`
 2. Modifica `nginx/nginx.conf` para apuntar a tus certificados
 3. Reinicia el contenedor: `docker-compose restart nginx`
+
+## 🧮 Calculadora Web (ASP.NET Framework 4.8)
+
+### Descripción
+Aplicación web desarrollada en ASP.NET Framework 4.8 con una calculadora que realiza operaciones básicas (suma, resta, multiplicación). Diseñada para ejecutarse en IIS en Windows Server 2022.
+
+### Características
+- ✅ Interfaz web moderna y responsiva
+- ✅ Operaciones: Suma, Resta y Multiplicación
+- ✅ Validación de datos de entrada
+- ✅ Despliegue automático con GitHub Actions
+- ✅ Compatible con IIS
+
+### Despliegue Rápido
+
+#### Opción 1: Usando GitHub Actions (Recomendado)
+El workflow se ejecuta automáticamente en el self-hosted runner de Windows Server 2022:
+
+```yaml
+# Se activa automáticamente con cambios en calculadora-web/
+on:
+  push:
+    paths: ['calculadora-web/**']
+```
+
+#### Opción 2: Despliegue Manual con PowerShell
+
+```powershell
+# Build y despliegue básico
+.\deploy-calculadora.ps1
+
+# Build, despliegue y configuración automática de IIS
+.\deploy-calculadora.ps1 -ConfigureIIS
+
+# Solo probar build sin desplegar
+.\test-build-calculadora.ps1
+```
+
+#### Opción 3: Build Manual con Comando
+
+```cmd
+# Test build rápido
+test-build-calculadora.bat
+```
+
+### URLs de Acceso
+- **Desarrollo**: http://localhost/calculadora-web
+- **Servidor**: http://[nombre-servidor]/calculadora-web
+- **Puerto personalizado**: http://localhost:8080 (con -ConfigureIIS)
+
+### Estructura del Proyecto
+```
+calculadora-web/
+├── App_Code/
+│   └── Calculator.cs          # Lógica matemática
+├── Properties/
+│   └── AssemblyInfo.cs        # Info del ensamblado
+├── Default.aspx               # Página principal
+├── Default.aspx.cs            # Código behind
+├── Default.aspx.designer.cs   # Diseñador
+├── Styles.css                 # Estilos CSS
+├── Web.config                 # Configuración web
+└── CalculadoraWeb.csproj      # Proyecto
+```
+
+### Configuración de IIS Recomendada
+- **Application Pool**: .NET v4.0 (Integrated Pipeline)
+- **Target Framework**: 4.8
+- **Managed Pipeline Mode**: Integrated
+- **Identity**: ApplicationPoolIdentity
+
+### Archivos de Scripts Disponibles
+- `deploy-calculadora.ps1` - Despliegue completo con opciones
+- `test-build-calculadora.ps1` - Test de compilación rápido
+- `test-build-calculadora.bat` - Test de compilación básico
+
+### Workflow de GitHub Actions
+El archivo `.github/workflows/calculadora-web.yml` automatiza:
+1. ✅ Build del proyecto
+2. ✅ Verificación de artefactos
+3. ✅ Backup automático
+4. ✅ Despliegue a `C:\inetpub\wwwroot\calculadora-web`
+5. ✅ Configuración de permisos
+6. ✅ Verificación del despliegue
+7. ✅ Upload de artefactos
+
+---
+
+**Desarrollado para Windows Server 2022 con self-hosted GitHub Actions runner**

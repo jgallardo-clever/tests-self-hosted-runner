@@ -1,0 +1,282 @@
+name: Build and Deploy Calculadora Web
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'calculadora-web/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'calculadora-web/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Verify build environment
+      run: |
+        echo "Verificando entorno de build en Windows Server 2022..."
+        echo "MSBuild version:"
+        msbuild -version
+        echo ""
+        echo ".NET Framework versions disponibles:"
+        Get-ChildItem "C:\Program Files (x86)\Microsoft SDKs\Windows\*" -Name | Where-Object { $_ -like "v*" }
+        echo ""
+        echo "Directorio de trabajo actual:"
+        Get-Location
+
+    - name: Clean previous build artifacts
+      run: |
+        if (Test-Path "calculadora-web\bin") {
+          Remove-Item "calculadora-web\bin" -Recurse -Force
+          echo "Limpiados artefactos de build anteriores"
+        }
+        if (Test-Path "calculadora-web\obj") {
+          Remove-Item "calculadora-web\obj" -Recurse -Force
+          echo "Limpiados objetos de build anteriores"
+        }
+
+    - name: Build Application
+      run: |
+        echo "Compilando Calculadora Web en modo Release..."
+        msbuild calculadora-web/CalculadoraWeb.csproj `
+          /p:Configuration=Release `
+          /p:Platform="Any CPU" `
+          /p:TargetFrameworkVersion=v4.8 `
+          /p:OutputPath=bin\ `
+          /verbosity:minimal `
+          /nologo
+        
+        if ($LASTEXITCODE -ne 0) {
+          echo "Error en la compilación"
+          exit 1
+        }
+        echo "✅ Compilación exitosa"
+
+    - name: Verify build output
+      run: |
+        echo "Verificando artefactos de build..."
+        if (Test-Path "calculadora-web/bin/CalculadoraWeb.dll") {
+          echo "✅ DLL principal generada correctamente"
+          $dllInfo = Get-Item "calculadora-web/bin/CalculadoraWeb.dll"
+          echo "   Tamaño: $($dllInfo.Length) bytes"
+          echo "   Fecha: $($dllInfo.LastWriteTime)"
+        } else {
+          echo "❌ DLL principal no encontrada"
+          exit 1
+        }
+        
+        echo ""
+        echo "Contenido del directorio bin:"
+        Get-ChildItem "calculadora-web/bin" | Format-Table Name, Length, LastWriteTime
+
+    - name: Prepare IIS deployment
+      run: |
+        $iisPath = "C:\inetpub\wwwroot\calculadora-web"
+        
+        # Crear directorio de backups si no existe
+        $backupDir = "C:\inetpub\backups"
+        if (!(Test-Path $backupDir)) {
+          New-Item -ItemType Directory -Force -Path $backupDir
+          echo "Directorio de backups creado: $backupDir"
+        }
+        
+        # Crear backup de la aplicación actual si existe
+        if (Test-Path $iisPath -and (Get-ChildItem $iisPath -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0) {
+          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+          $backupPath = "$backupDir\calculadora-web-$timestamp"
+          
+          Copy-Item -Path $iisPath -Destination $backupPath -Recurse -Force
+          echo "✅ Backup creado: $backupPath"
+          
+          # Limpiar el directorio actual (mantener estructura)
+          Get-ChildItem $iisPath -Recurse | Remove-Item -Force -Recurse
+          echo "✅ Directorio IIS limpiado"
+        }
+        
+        # Crear directorio de destino si no existe
+        if (!(Test-Path $iisPath)) {
+          New-Item -ItemType Directory -Force -Path $iisPath
+          echo "✅ Directorio IIS creado: $iisPath"
+        }
+
+    - name: Deploy to IIS
+      run: |
+        $sourcePath = "calculadora-web"
+        $targetPath = "C:\inetpub\wwwroot\calculadora-web"
+        
+        echo "Desplegando aplicación web a IIS..."
+        
+        # Copiar archivos de la aplicación web
+        $deploymentFiles = @(
+          @{Pattern = "*.aspx"; Description = "Páginas ASP.NET"},
+          @{Pattern = "*.css"; Description = "Hojas de estilo"},
+          @{Pattern = "Web.config"; Description = "Configuración web"},
+          @{Pattern = "bin\*.dll"; Description = "Librerías compiladas"},
+          @{Pattern = "bin\*.pdb"; Description = "Símbolos de debug"}
+        )
+        
+        $totalFiles = 0
+        foreach ($deployment in $deploymentFiles) {
+          $files = Get-ChildItem -Path $sourcePath -Include $deployment.Pattern -Recurse -ErrorAction SilentlyContinue
+          
+          if ($files) {
+            echo "Copiando $($deployment.Description)..."
+            foreach ($file in $files) {
+              # Calcular ruta relativa desde el directorio fuente
+              $relativePath = $file.FullName.Substring((Get-Item $sourcePath).FullName.Length + 1)
+              $destinationFile = Join-Path $targetPath $relativePath
+              $destinationDir = Split-Path $destinationFile -Parent
+              
+              # Crear directorio de destino si no existe
+              if (!(Test-Path $destinationDir)) {
+                New-Item -ItemType Directory -Force -Path $destinationDir | Out-Null
+              }
+              
+              # Copiar archivo
+              Copy-Item -Path $file.FullName -Destination $destinationFile -Force
+              echo "   ✅ $relativePath"
+              $totalFiles++
+            }
+          } else {
+            echo "   ⚠️  No se encontraron archivos para: $($deployment.Description)"
+          }
+        }
+        
+        echo ""
+        echo "✅ Total de archivos desplegados: $totalFiles"
+
+    - name: Configure IIS permissions and security
+      run: |
+        $iisPath = "C:\inetpub\wwwroot\calculadora-web"
+        
+        echo "Configurando permisos y seguridad para IIS..."
+        
+        try {
+          # Configurar permisos para IIS_IUSRS (lectura y ejecución)
+          icacls $iisPath /grant "IIS_IUSRS:(OI)(CI)RX" /T /Q
+          echo "✅ Permisos IIS_IUSRS configurados"
+          
+          # Configurar permisos para ApplicationPoolIdentity (control total en bin y temporal)
+          icacls "$iisPath\bin" /grant "IIS_IUSRS:(OI)(CI)RX" /T /Q 2>$null
+          echo "✅ Permisos del directorio bin configurados"
+          
+          # Verificar que el directorio Temporary ASP.NET Files tenga permisos
+          $tempAspNet = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
+          if (Test-Path $tempAspNet) {
+            icacls $tempAspNet /grant "IIS_IUSRS:(OI)(CI)F" /T /Q 2>$null
+            echo "✅ Permisos de archivos temporales ASP.NET verificados"
+          }
+          
+        } catch {
+          Write-Warning "⚠️  Algunos permisos no se pudieron configurar automáticamente: $($_.Exception.Message)"
+          Write-Warning "   Considera configurarlos manualmente en IIS Manager"
+        }
+
+    - name: Verify IIS deployment
+      run: |
+        $iisPath = "C:\inetpub\wwwroot\calculadora-web"
+        
+        echo "=============================================="
+        echo "     VERIFICACIÓN DE DESPLIEGUE EN IIS"
+        echo "=============================================="
+        echo ""
+        
+        # Verificar estructura de directorios
+        $requiredDirs = @("bin")
+        foreach ($dir in $requiredDirs) {
+          $dirPath = Join-Path $iisPath $dir
+          if (Test-Path $dirPath) {
+            $fileCount = (Get-ChildItem $dirPath | Measure-Object).Count
+            echo "✅ Directorio '$dir' - $fileCount archivos"
+          } else {
+            echo "❌ Directorio '$dir' - FALTANTE"
+            exit 1
+          }
+        }
+        
+        # Verificar archivos críticos
+        $requiredFiles = @(
+          @{Name = "Default.aspx"; Critical = $true},
+          @{Name = "Web.config"; Critical = $true},
+          @{Name = "Styles.css"; Critical = $false},
+          @{Name = "bin\CalculadoraWeb.dll"; Critical = $true}
+        )
+        
+        $missingCritical = 0
+        foreach ($fileCheck in $requiredFiles) {
+          $filePath = Join-Path $iisPath $fileCheck.Name
+          if (Test-Path $filePath) {
+            $size = (Get-Item $filePath).Length
+            echo "✅ $($fileCheck.Name) - $size bytes"
+          } else {
+            if ($fileCheck.Critical) {
+              echo "❌ $($fileCheck.Name) - CRÍTICO FALTANTE"
+              $missingCritical++
+            } else {
+              echo "⚠️  $($fileCheck.Name) - Opcional faltante"
+            }
+          }
+        }
+        
+        if ($missingCritical -gt 0) {
+          echo ""
+          echo "❌ ERROR: $missingCritical archivos críticos faltantes"
+          exit 1
+        }
+        
+        echo ""
+        echo "=============================================="
+        echo "    ✅ DESPLIEGUE COMPLETADO EXITOSAMENTE"
+        echo "=============================================="
+        echo ""
+        echo "🌐 La aplicación está lista en:"
+        echo "   http://localhost/calculadora-web"
+        echo "   http://$env:COMPUTERNAME/calculadora-web"
+        echo ""
+        echo "📝 Configuración recomendada en IIS:"
+        echo "   - Application Pool: .NET v4.0 Classic o Integrated"
+        echo "   - Target Framework: 4.8"
+        echo "   - Managed Pipeline Mode: Integrated (recomendado)"
+
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: calculadora-web-deployment-${{ github.run_number }}
+        path: |
+          calculadora-web/*.aspx
+          calculadora-web/*.css
+          calculadora-web/Web.config
+          calculadora-web/bin/*.dll
+          calculadora-web/bin/*.pdb
+        retention-days: 30
+        
+    - name: Create deployment summary
+      run: |
+        echo "## 🚀 Resumen del Despliegue - Calculadora Web" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### ✅ Despliegue Completado Exitosamente" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "| Elemento | Estado |" >> $env:GITHUB_STEP_SUMMARY
+        echo "|----------|--------|" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 🏗️ Build | ✅ Exitoso |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 📦 Artefactos | ✅ Generados |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 🌐 Despliegue IIS | ✅ Completado |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 🔐 Permisos | ✅ Configurados |" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 🌐 URLs de Acceso" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Local**: http://localhost/calculadora-web" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Servidor**: http://$env:COMPUTERNAME/calculadora-web" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 📋 Información Técnica" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Framework**: .NET Framework 4.8" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Tipo**: ASP.NET Web Forms" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Servidor**: Windows Server 2022" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Ruta IIS**: C:\inetpub\wwwroot\calculadora-web" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Build #**: ${{ github.run_number }}" >> $env:GITHUB_STEP_SUMMARY

@@ -4,6 +4,8 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestNet48", "test-net48\TestNet48.csproj", "{64856870-4DE2-F6FD-52FA-C186D10D4042}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculadoraWeb", "calculadora-web\CalculadoraWeb.csproj", "{8B5E7FA9-5E2D-4A5C-8C3B-7F9E3D2A1B4C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,6 +16,10 @@ Global
 		{64856870-4DE2-F6FD-52FA-C186D10D4042}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64856870-4DE2-F6FD-52FA-C186D10D4042}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64856870-4DE2-F6FD-52FA-C186D10D4042}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B5E7FA9-5E2D-4A5C-8C3B-7F9E3D2A1B4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B5E7FA9-5E2D-4A5C-8C3B-7F9E3D2A1B4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B5E7FA9-5E2D-4A5C-8C3B-7F9E3D2A1B4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B5E7FA9-5E2D-4A5C-8C3B-7F9E3D2A1B4C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
