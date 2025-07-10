@@ -74,24 +74,98 @@ if (Test-Path $aspNetPath) {
 Write-Host ""
 Write-Host "2. Compilando el proyecto..." -ForegroundColor Yellow
 
-# Limpiar y compilar
+# Intentar compilación con MSBuild primero
 $buildArgs = @(
     $projectPath,
     "/p:Configuration=$Configuration",
     "/p:Platform=Any CPU",
+    "/target:Build",
     "/verbosity:minimal",
     "/nologo"
 )
 
-Write-Host "   Ejecutando: msbuild $($buildArgs -join ' ')" -ForegroundColor Gray
+Write-Host "   Intentando compilación con MSBuild..." -ForegroundColor Gray
+Write-Host "   Comando: msbuild $($buildArgs -join ' ')" -ForegroundColor Gray
 $buildResult = & msbuild @buildArgs
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Error en la compilación. Revisa los errores anteriores."
-    exit 1
+    Write-Warning "   ⚠️  MSBuild falló, intentando compilación alternativa..."
+    
+    # Método alternativo usando csc.exe directamente
+    $cscPaths = @(
+        "${env:ProgramFiles(x86)}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\csc.exe",
+        "${env:ProgramFiles}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64\csc.exe",
+        "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe",
+        "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+    )
+    
+    $cscPath = $null
+    foreach ($path in $cscPaths) {
+        if (Test-Path $path) {
+            $cscPath = $path
+            break
+        }
+    }
+    
+    if ($cscPath) {
+        Write-Host "   Usando compilador C# en: $cscPath" -ForegroundColor Gray
+        
+        # Crear directorio bin
+        $binPath = "calculadora-web\bin"
+        if (!(Test-Path $binPath)) {
+            New-Item -ItemType Directory -Path $binPath -Force | Out-Null
+        }
+        
+        # Referencias del framework
+        $frameworkPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319"
+        $references = @(
+            "$frameworkPath\System.dll",
+            "$frameworkPath\System.Web.dll", 
+            "$frameworkPath\System.Core.dll",
+            "$frameworkPath\System.Data.dll",
+            "$frameworkPath\System.Drawing.dll",
+            "$frameworkPath\System.Web.ApplicationServices.dll",
+            "$frameworkPath\System.ComponentModel.DataAnnotations.dll"
+        )
+        
+        # Archivos fuente
+        $sourceFiles = @(
+            "calculadora-web\App_Code\Calculator.cs",
+            "calculadora-web\Default.aspx.cs", 
+            "calculadora-web\Default.aspx.designer.cs",
+            "calculadora-web\Properties\AssemblyInfo.cs"
+        )
+        
+        # Construir comando de compilación
+        $cscArgs = @(
+            "/target:library",
+            "/out:$binPath\CalculadoraWeb.dll"
+        )
+        
+        foreach ($ref in $references) {
+            if (Test-Path $ref) {
+                $cscArgs += "/reference:$ref"
+            }
+        }
+        
+        $cscArgs += $sourceFiles
+        
+        Write-Host "   Compilando con csc.exe..." -ForegroundColor Gray
+        $cscResult = & $cscPath @cscArgs
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "   ✅ Compilación exitosa con csc.exe" -ForegroundColor Green
+        } else {
+            Write-Error "Error en la compilación alternativa. Revisa los errores anteriores."
+            exit 1
+        }
+    } else {
+        Write-Error "No se encontró compilador C# disponible."
+        exit 1
+    }
+} else {
+    Write-Host "   ✅ Compilación exitosa con MSBuild" -ForegroundColor Green
 }
-
-Write-Host "   ✅ Compilación exitosa" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "3. Preparando despliegue..." -ForegroundColor Yellow

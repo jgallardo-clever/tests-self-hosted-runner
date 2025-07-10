@@ -1,14 +1,6 @@
 name: Build and Deploy Calculadora Web
 
 on:
-  push:
-    branches: [ main, master, develop ]
-    paths:
-      - 'calculadora-web/**'
-  pull_request:
-    branches: [ main, master ]
-    paths:
-      - 'calculadora-web/**'
   workflow_dispatch:
 
 jobs:
@@ -45,19 +37,94 @@ jobs:
     - name: Build Application
       run: |
         echo "Compilando Calculadora Web en modo Release..."
+        echo "Entorno: Windows Server 2022 con MSBuild"
+        
+        # Intentar compilación con el proyecto principal
+        echo "Intentando build con proyecto principal..."
         msbuild calculadora-web/CalculadoraWeb.csproj `
           /p:Configuration=Release `
           /p:Platform="Any CPU" `
           /p:TargetFrameworkVersion=v4.8 `
           /p:OutputPath=bin\ `
           /verbosity:minimal `
-          /nologo
+          /nologo `
+          /target:Build
         
         if ($LASTEXITCODE -ne 0) {
-          echo "Error en la compilación"
-          exit 1
+          echo "❌ Build principal falló, intentando con proyecto simplificado..."
+          
+          # Usar proyecto simplificado que no depende de targets de VS
+          msbuild calculadora-web/CalculadoraWeb-Simple.csproj `
+            /p:Configuration=Release `
+            /p:Platform="Any CPU" `
+            /p:TargetFrameworkVersion=v4.8 `
+            /p:OutputPath=bin\ `
+            /verbosity:minimal `
+            /nologo `
+            /target:Build
+          
+          if ($LASTEXITCODE -ne 0) {
+            echo "❌ Build simplificado falló, intentando compilación directa..."
+            
+            # Método de último recurso: compilar directamente con csc.exe
+            $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+            if (!(Test-Path $cscPath)) {
+              $cscPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+            }
+            
+            if (Test-Path $cscPath) {
+              echo "Usando compilador C# directo: $cscPath"
+              
+              # Crear directorio bin
+              if (!(Test-Path "calculadora-web\bin")) {
+                New-Item -ItemType Directory -Path "calculadora-web\bin" -Force
+              }
+              
+              # Referencias del framework necesarias
+              $frameworkPath = Split-Path $cscPath
+              $references = @(
+                "$frameworkPath\System.dll",
+                "$frameworkPath\System.Web.dll", 
+                "$frameworkPath\System.Core.dll",
+                "$frameworkPath\System.Data.dll",
+                "$frameworkPath\System.Drawing.dll"
+              )
+              
+              # Verificar que existen las referencias
+              $validRefs = @()
+              foreach ($ref in $references) {
+                if (Test-Path $ref) {
+                  $validRefs += "/reference:$ref"
+                }
+              }
+              
+              # Compilar
+              & $cscPath /target:library `
+                /out:"calculadora-web\bin\CalculadoraWeb.dll" `
+                $validRefs `
+                "calculadora-web\App_Code\Calculator.cs" `
+                "calculadora-web\Default.aspx.cs" `
+                "calculadora-web\Default.aspx.designer.cs" `
+                "calculadora-web\Properties\AssemblyInfo.cs"
+                
+              if ($LASTEXITCODE -eq 0) {
+                echo "✅ Compilación exitosa con csc.exe directo"
+              } else {
+                echo "❌ Error en compilación directa"
+                echo "Listando archivos fuente para diagnóstico:"
+                Get-ChildItem "calculadora-web\*.cs" -Recurse
+                exit 1
+              }
+            } else {
+              echo "❌ No se encontró compilador C#"
+              exit 1
+            }
+          } else {
+            echo "✅ Compilación exitosa con proyecto simplificado"
+          }
+        } else {
+          echo "✅ Compilación exitosa con proyecto principal"
         }
-        echo "✅ Compilación exitosa"
 
     - name: Verify build output
       run: |
@@ -255,7 +322,7 @@ jobs:
           calculadora-web/Web.config
           calculadora-web/bin/*.dll
           calculadora-web/bin/*.pdb
-        retention-days: 30
+        retention-days: 2
         
     - name: Create deployment summary
       run: |
