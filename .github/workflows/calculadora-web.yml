@@ -108,34 +108,34 @@ jobs:
                 "calculadora-web\Properties\AssemblyInfo.cs"
                 
               if ($LASTEXITCODE -eq 0) {
-                echo "✅ Compilación exitosa con csc.exe directo"
+                echo "OK Compilacion exitosa con csc.exe directo"
               } else {
-                echo "❌ Error en compilación directa"
-                echo "Listando archivos fuente para diagnóstico:"
+                echo "ERROR en compilacion directa"
+                echo "Listando archivos fuente para diagnostico:"
                 Get-ChildItem "calculadora-web\*.cs" -Recurse
                 exit 1
               }
             } else {
-              echo "❌ No se encontró compilador C#"
+              echo "ERROR No se encontro compilador C#"
               exit 1
             }
           } else {
-            echo "✅ Compilación exitosa con proyecto simplificado"
+            echo "OK Compilacion exitosa con proyecto simplificado"
           }
         } else {
-          echo "✅ Compilación exitosa con proyecto principal"
+          echo "OK Compilacion exitosa con proyecto principal"
         }
 
     - name: Verify build output
       run: |
         echo "Verificando artefactos de build..."
         if (Test-Path "calculadora-web/bin/CalculadoraWeb.dll") {
-          echo "✅ DLL principal generada correctamente"
+          echo "OK DLL principal generada correctamente"
           $dllInfo = Get-Item "calculadora-web/bin/CalculadoraWeb.dll"
           echo "   Tamaño: $($dllInfo.Length) bytes"
           echo "   Fecha: $($dllInfo.LastWriteTime)"
         } else {
-          echo "❌ DLL principal no encontrada"
+          echo "ERROR DLL principal no encontrada"
           exit 1
         }
         
@@ -162,20 +162,20 @@ jobs:
             $backupPath = "$backupDir\calculadora-web-$timestamp"
             
             Copy-Item -Path $iisPath -Destination $backupPath -Recurse -Force
-            echo "✅ Backup creado: $backupPath"
+            echo "OK Backup creado: $backupPath"
             
             # Limpiar el directorio actual (mantener estructura)
             Get-ChildItem $iisPath -Recurse | Remove-Item -Force -Recurse
-            echo "✅ Directorio IIS limpiado"
+            echo "OK Directorio IIS limpiado"
           } else {
-            echo "📁 Directorio IIS existe pero está vacío, no se requiere backup"
+            echo "Directorio IIS existe pero esta vacio, no se requiere backup"
           }
         }
         
         # Crear directorio de destino si no existe
         if (!(Test-Path $iisPath)) {
           New-Item -ItemType Directory -Force -Path $iisPath
-          echo "✅ Directorio IIS creado: $iisPath"
+          echo "OK Directorio IIS creado: $iisPath"
         }
 
     - name: Deploy to IIS
@@ -213,16 +213,16 @@ jobs:
               
               # Copiar archivo
               Copy-Item -Path $file.FullName -Destination $destinationFile -Force
-              echo "   ✅ $relativePath"
+              echo "   OK $relativePath"
               $totalFiles++
             }
           } else {
-            echo "   ⚠️  No se encontraron archivos para: $($deployment.Description)"
+            echo "   WARNING No se encontraron archivos para: $($deployment.Description)"
           }
         }
         
         echo ""
-        echo "✅ Total de archivos desplegados: $totalFiles"
+        echo "OK Total de archivos desplegados: $totalFiles"
 
     - name: Configure IIS permissions and security
       run: |
@@ -233,21 +233,21 @@ jobs:
         try {
           # Configurar permisos para IIS_IUSRS (lectura y ejecución)
           icacls $iisPath /grant "IIS_IUSRS:(OI)(CI)RX" /T /Q
-          echo "✅ Permisos IIS_IUSRS configurados"
+          echo "OK Permisos IIS_IUSRS configurados"
           
           # Configurar permisos para ApplicationPoolIdentity (control total en bin y temporal)
           icacls "$iisPath\bin" /grant "IIS_IUSRS:(OI)(CI)RX" /T /Q 2>$null
-          echo "✅ Permisos del directorio bin configurados"
+          echo "OK Permisos del directorio bin configurados"
           
           # Verificar que el directorio Temporary ASP.NET Files tenga permisos
           $tempAspNet = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files"
           if (Test-Path $tempAspNet) {
             icacls $tempAspNet /grant "IIS_IUSRS:(OI)(CI)F" /T /Q 2>$null
-            echo "✅ Permisos de archivos temporales ASP.NET verificados"
+            echo "OK Permisos de archivos temporales ASP.NET verificados"
           }
           
         } catch {
-          Write-Warning "⚠️  Algunos permisos no se pudieron configurar automáticamente: $($_.Exception.Message)"
+          Write-Warning "WARNING Algunos permisos no se pudieron configurar automaticamente: $($_.Exception.Message)"
           Write-Warning "   Considera configurarlos manualmente en IIS Manager"
         }
 
@@ -266,9 +266,9 @@ jobs:
           $dirPath = Join-Path $iisPath $dir
           if (Test-Path $dirPath) {
             $fileCount = (Get-ChildItem $dirPath | Measure-Object).Count
-            echo "✅ Directorio '$dir' - $fileCount archivos"
+            echo "OK Directorio '$dir' - $fileCount archivos"
           } else {
-            echo "❌ Directorio '$dir' - FALTANTE"
+            echo "ERROR Directorio '$dir' - FALTANTE"
             exit 1
           }
         }
@@ -286,26 +286,26 @@ jobs:
           $filePath = Join-Path $iisPath $fileCheck.Name
           if (Test-Path $filePath) {
             $size = (Get-Item $filePath).Length
-            echo "✅ $($fileCheck.Name) - $size bytes"
+            echo "OK $($fileCheck.Name) - $size bytes"
           } else {
             if ($fileCheck.Critical) {
-              echo "❌ $($fileCheck.Name) - CRÍTICO FALTANTE"
+              echo "ERROR $($fileCheck.Name) - CRITICO FALTANTE"
               $missingCritical++
             } else {
-              echo "⚠️  $($fileCheck.Name) - Opcional faltante"
+              echo "WARNING $($fileCheck.Name) - Opcional faltante"
             }
           }
         }
         
         if ($missingCritical -gt 0) {
           echo ""
-          echo "❌ ERROR: $missingCritical archivos críticos faltantes"
+          echo "ERROR: $missingCritical archivos criticos faltantes"
           exit 1
         }
         
         echo ""
         echo "=============================================="
-        echo "    ✅ DESPLIEGUE COMPLETADO EXITOSAMENTE"
+        echo "    OK DESPLIEGUE COMPLETADO EXITOSAMENTE"
         echo "=============================================="
         echo ""
         echo "🌐 La aplicación está lista en:"
