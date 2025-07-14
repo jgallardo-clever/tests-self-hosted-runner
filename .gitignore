@@ -32,3 +32,5 @@ backup_sonar.sql
 *.swp
 *.swo
 *~
+
+.vs
