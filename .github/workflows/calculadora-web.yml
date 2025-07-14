@@ -39,7 +39,7 @@ jobs:
         echo "Compilando Calculadora Web en modo Release..."
         echo "Entorno: Windows Server 2022 con MSBuild"
         
-        # Intentar compilación con el proyecto principal
+        # Intentar compilacion con el proyecto principal
         echo "Intentando build con proyecto principal..."
         msbuild calculadora-web/CalculadoraWeb.csproj `
           /p:Configuration=Release `
@@ -51,7 +51,7 @@ jobs:
           /target:Build
         
         if ($LASTEXITCODE -ne 0) {
-          echo "❌ Build principal falló, intentando con proyecto simplificado..."
+          echo "❌ Build principal fallo, intentando con proyecto simplificado..."
           
           # Usar proyecto simplificado que no depende de targets de VS
           msbuild calculadora-web/CalculadoraWeb-Simple.csproj `
@@ -64,9 +64,9 @@ jobs:
             /target:Build
           
           if ($LASTEXITCODE -ne 0) {
-            echo "❌ Build simplificado falló, intentando compilación directa..."
+            echo "❌ Build simplificado fallo, intentando compilacion directa..."
             
-            # Método de último recurso: compilar directamente con csc.exe
+            # Metodo de ultimo recurso: compilar directamente con csc.exe
             $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
             if (!(Test-Path $cscPath)) {
               $cscPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
@@ -132,7 +132,7 @@ jobs:
         if (Test-Path "calculadora-web/bin/CalculadoraWeb.dll") {
           echo "OK DLL principal generada correctamente"
           $dllInfo = Get-Item "calculadora-web/bin/CalculadoraWeb.dll"
-          echo "   Tamaño: $($dllInfo.Length) bytes"
+          echo "   Tamano: $($dllInfo.Length) bytes"
           echo "   Fecha: $($dllInfo.LastWriteTime)"
         } else {
           echo "ERROR DLL principal no encontrada"
@@ -154,7 +154,7 @@ jobs:
           echo "Directorio de backups creado: $backupDir"
         }
         
-        # Crear backup de la aplicación actual si existe y tiene contenido
+        # Crear backup de la aplicacion actual si existe y tiene contenido
         if (Test-Path $iisPath) {
           $existingFiles = Get-ChildItem $iisPath -ErrorAction SilentlyContinue
           if ($existingFiles -and ($existingFiles | Measure-Object).Count -gt 0) {
@@ -183,15 +183,15 @@ jobs:
         $sourcePath = "calculadora-web"
         $targetPath = "C:\inetpub\wwwroot\calculadora-web"
         
-        echo "Desplegando aplicación web a IIS..."
+        echo "Desplegando aplicacion web a IIS..."
         
-        # Copiar archivos de la aplicación web
+        # Copiar archivos de la aplicacion web
         $deploymentFiles = @(
-          @{Pattern = "*.aspx"; Description = "Páginas ASP.NET"},
+          @{Pattern = "*.aspx"; Description = "Paginas ASP.NET"},
           @{Pattern = "*.css"; Description = "Hojas de estilo"},
-          @{Pattern = "Web.config"; Description = "Configuración web"},
-          @{Pattern = "bin\*.dll"; Description = "Librerías compiladas"},
-          @{Pattern = "bin\*.pdb"; Description = "Símbolos de debug"}
+          @{Pattern = "Web.config"; Description = "Configuracion web"},
+          @{Pattern = "bin\*.dll"; Description = "Librerias compiladas"},
+          @{Pattern = "bin\*.pdb"; Description = "Simbolos de debug"}
         )
         
         $totalFiles = 0
@@ -231,22 +231,22 @@ jobs:
         $appName = "calculadora-web"
         
         echo "=============================================="
-        echo "    CONFIGURACIÓN DE IIS Y PERMISOS"
+        echo "    CONFIGURACION DE IIS Y PERMISOS"
         echo "=============================================="
         
-        # Verificar si IIS está disponible
+        # Verificar si IIS esta disponible
         try {
           Import-Module WebAdministration -ErrorAction Stop
-          echo "OK Módulo WebAdministration cargado"
+          echo "OK Modulo WebAdministration cargado"
         } catch {
-          echo "WARNING Módulo IIS no disponible, usando configuración básica"
+          echo "WARNING Modulo IIS no disponible, usando configuracion basica"
         }
         
-        # Configurar permisos básicos
+        # Configurar permisos basicos
         try {
           echo "Configurando permisos del sistema de archivos..."
           
-          # Permisos para IIS_IUSRS (lectura y ejecución)
+          # Permisos para IIS_IUSRS (lectura y ejecucion)
           icacls $iisPath /grant "IIS_IUSRS:(OI)(CI)RX" /T /Q
           echo "OK Permisos IIS_IUSRS configurados"
           
@@ -256,7 +256,7 @@ jobs:
           # Permisos para ApplicationPoolIdentity
           icacls $iisPath /grant "ApplicationPoolIdentity:(OI)(CI)RX" /T /Q 2>$null
           
-          # Permisos específicos para bin
+          # Permisos especificos para bin
           if (Test-Path "$iisPath\bin") {
             icacls "$iisPath\bin" /grant "IIS_IUSRS:(OI)(CI)RX" /T /Q
             echo "OK Permisos del directorio bin configurados"
@@ -309,12 +309,12 @@ jobs:
             echo "OK Application Pool reiniciado"
             
           } else {
-            echo "WARNING Configuración avanzada de IIS no disponible"
-            echo "   La aplicación usará el Application Pool por defecto"
+            echo "WARNING Configuracion avanzada de IIS no disponible"
+            echo "   La aplicacion usara el Application Pool por defecto"
           }
         } catch {
-          Write-Warning "WARNING Error en configuración IIS: $($_.Exception.Message)"
-          Write-Warning "   La aplicación puede funcionar con configuración básica"
+          Write-Warning "WARNING Error en configuracion IIS: $($_.Exception.Message)"
+          Write-Warning "   La aplicacion puede funcionar con configuracion basica"
         }
 
     - name: Fix common IIS and ASP.NET issues
@@ -337,26 +337,26 @@ jobs:
           echo "WARNING Error al registrar ASP.NET: $($_.Exception.Message)"
         }
         
-        # Reiniciar IIS para asegurar configuración fresca
+        # Reiniciar IIS para asegurar configuracion fresca
         try {
           echo "Reiniciando IIS para aplicar configuraciones..."
           iisreset /restart | Out-String | Write-Host
           echo "OK IIS reiniciado exitosamente"
           
-          # Esperar a que IIS esté completamente iniciado
+          # Esperar a que IIS este completamente iniciado
           Start-Sleep -Seconds 5
           
         } catch {
           echo "WARNING Error al reiniciar IIS: $($_.Exception.Message)"
         }
         
-        # Verificar estado de IIS después del reinicio
+        # Verificar estado de IIS despues del reinicio
         try {
           $iisService = Get-Service -Name "W3SVC" -ErrorAction SilentlyContinue
           if ($iisService -and $iisService.Status -eq "Running") {
-            echo "OK Servicio IIS (W3SVC) está ejecutándose"
+            echo "OK Servicio IIS (W3SVC) esta ejecutandose"
           } else {
-            echo "WARNING Servicio IIS no está ejecutándose correctamente"
+            echo "WARNING Servicio IIS no esta ejecutandose correctamente"
           }
         } catch {
           echo "INFO No se pudo verificar el estado del servicio IIS"
@@ -367,7 +367,7 @@ jobs:
         $iisPath = "C:\inetpub\wwwroot\calculadora-web"
         
         echo "=============================================="
-        echo "     VERIFICACIÓN DE DESPLIEGUE EN IIS"
+        echo "     VERIFICACION DE DESPLIEGUE EN IIS"
         echo "=============================================="
         echo ""
         
@@ -384,7 +384,7 @@ jobs:
           }
         }
         
-        # Verificar archivos críticos
+        # Verificar archivos criticos
         $requiredFiles = @(
           @{Name = "Default.aspx"; Critical = $true},
           @{Name = "Web.config"; Critical = $true},
@@ -403,9 +403,9 @@ jobs:
             if ($fileCheck.Name -eq "Default.aspx") {
               $content = Get-Content $filePath -Raw
               if ($content -and $content.Length -gt 100) {
-                echo "   ✓ Default.aspx contiene HTML válido"
+                echo "   ✓ Default.aspx contiene HTML valido"
               } else {
-                echo "   ⚠️  Default.aspx parece estar vacío o incompleto"
+                echo "   ⚠️  Default.aspx parece estar vacio o incompleto"
               }
             }
           } else {
@@ -424,20 +424,20 @@ jobs:
           exit 1
         }
         
-        # Diagnósticos adicionales para solucionar 404
+        # Diagnosticos adicionales para solucionar 404
         echo ""
         echo "=============================================="
-        echo "       DIAGNÓSTICOS DE IIS Y ASP.NET"
+        echo "       DIAGNOSTICOS DE IIS Y ASP.NET"
         echo "=============================================="
         
-        # Verificar configuración de IIS
+        # Verificar configuracion de IIS
         try {
           if (Get-Module WebAdministration -ErrorAction SilentlyContinue) {
-            # Verificar si existe aplicación web
+            # Verificar si existe aplicacion web
             $webApp = Get-WebApplication -Name "calculadora-web" -Site "Default Web Site" -ErrorAction SilentlyContinue
             if ($webApp) {
               echo "OK Web Application 'calculadora-web' encontrada"
-              echo "   Ruta física: $($webApp.PhysicalPath)"
+              echo "   Ruta fisica: $($webApp.PhysicalPath)"
               echo "   Application Pool: $($webApp.ApplicationPool)"
             } else {
               echo "WARNING Web Application 'calculadora-web' no encontrada"
@@ -447,8 +447,8 @@ jobs:
               if ($virtualDir) {
                 echo "OK Directory Virtual encontrado"
               } else {
-                echo "WARNING No se encontró configuración específica"
-                echo "   La aplicación debe funcionar como subdirectorio físico"
+                echo "WARNING No se encontro configuracion especifica"
+                echo "   La aplicacion debe funcionar como subdirectorio fisico"
               }
             }
             
@@ -460,10 +460,10 @@ jobs:
               }
             }
           } else {
-            echo "INFO Módulo WebAdministration no disponible para diagnósticos avanzados"
+            echo "INFO Modulo WebAdministration no disponible para diagnosticos avanzados"
           }
         } catch {
-          echo "WARNING Error en diagnósticos IIS: $($_.Exception.Message)"
+          echo "WARNING Error en diagnosticos IIS: $($_.Exception.Message)"
         }
         
         # Verificar permisos de archivos
@@ -493,7 +493,7 @@ jobs:
         
         # Verificar .NET Framework
         echo ""
-        echo "Verificando instalación de .NET Framework..."
+        echo "Verificando instalacion de .NET Framework..."
         $netFramework = Get-ChildItem "HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\" -ErrorAction SilentlyContinue
         if ($netFramework) {
           $version = $netFramework.GetValue("Release")
@@ -503,7 +503,7 @@ jobs:
             echo "WARNING .NET Framework version: $version (puede ser insuficiente)"
           }
         } else {
-          echo "WARNING No se pudo verificar la versión de .NET Framework"
+          echo "WARNING No se pudo verificar la version de .NET Framework"
         }
         
         echo ""
@@ -511,72 +511,72 @@ jobs:
         echo "    OK VERIFICACIONES COMPLETADAS"
         echo "=============================================="
         echo ""
-        echo "🌐 URLs para probar la aplicación:"
+        echo "🌐 URLs para probar la aplicacion:"
         echo "   http://localhost/calculadora-web/"
         echo "   http://localhost/calculadora-web/Default.aspx"
         echo "   http://$env:COMPUTERNAME/calculadora-web/"
         echo ""
         echo "🔧 Si persisten problemas 404, verificar:"
-        echo "   1. IIS está iniciado: iisreset"
+        echo "   1. IIS esta iniciado: iisreset"
         echo "   2. Application Pool activo en IIS Manager"
         echo "   3. Permisos de 'IIS_IUSRS' en la carpeta"
         echo "   4. .NET Framework 4.8 instalado"
         echo "   5. ASP.NET registrado en IIS: aspnet_regiis -i"
 
-    # - name: Upload deployment artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: calculadora-web-deployment-${{ github.run_number }}
-    #     path: |
-    #       calculadora-web/*.aspx
-    #       calculadora-web/*.css
-    #       calculadora-web/Web.config
-    #       calculadora-web/bin/*.dll
-    #       calculadora-web/bin/*.pdb
-    #     retention-days: 2
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: calculadora-web-deployment-${{ github.run_number }}
+        path: |
+          calculadora-web/*.aspx
+          calculadora-web/*.css
+          calculadora-web/Web.config
+          calculadora-web/bin/*.dll
+          calculadora-web/bin/*.pdb
+        retention-days: 2
         
-    # - name: Create deployment summary
-    #   run: |
-    #     echo "## 🚀 Resumen del Despliegue - Calculadora Web" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "### ✅ Despliegue Completado Exitosamente" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "| Elemento | Estado |" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "|----------|--------|" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "| 🏗️ Build | ✅ Exitoso |" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "| 📦 Artefactos | ✅ Generados |" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "| 🌐 Despliegue IIS | ✅ Completado |" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "| 🔐 Permisos | ✅ Configurados |" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "| 🔄 IIS Reiniciado | ✅ Aplicado |" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "| ⚙️ ASP.NET | ✅ Registrado |" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "### 🌐 URLs de Acceso" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Local**: http://localhost/calculadora-web/" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Con Default.aspx**: http://localhost/calculadora-web/Default.aspx" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Servidor**: http://$env:COMPUTERNAME/calculadora-web/" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "### 🔧 Solución de Problemas 404" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "Si la aplicación muestra error 404, ejecutar en el servidor:" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo '```powershell' >> $env:GITHUB_STEP_SUMMARY
-    #     echo "# Reiniciar IIS" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "iisreset /restart" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "# Registrar ASP.NET en IIS" >> $env:GITHUB_STEP_SUMMARY
-    #     echo 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\aspnet_regiis.exe -i' >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "# Verificar permisos" >> $env:GITHUB_STEP_SUMMARY
-    #     echo 'icacls "C:\inetpub\wwwroot\calculadora-web" /grant "IIS_IUSRS:(OI)(CI)RX" /T' >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "# Verificar Application Pool en IIS Manager" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "# - .NET CLR Version: v4.0.30319" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "# - Managed Pipeline Mode: Integrated" >> $env:GITHUB_STEP_SUMMARY
-    #     echo '```' >> $env:GITHUB_STEP_SUMMARY
-    #     echo "" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "### 📋 Información Técnica" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Framework**: .NET Framework 4.8" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Tipo**: ASP.NET Web Forms" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Servidor**: Windows Server 2022" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Ruta IIS**: C:\inetpub\wwwroot\calculadora-web" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Build #**: ${{ github.run_number }}" >> $env:GITHUB_STEP_SUMMARY
-    #     echo "- **Página Principal**: Default.aspx" >> $env:GITHUB_STEP_SUMMARY
+    - name: Create deployment summary
+      run: |
+        echo "## 🚀 Resumen del Despliegue - Calculadora Web" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### ✅ Despliegue Completado Exitosamente" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "| Elemento | Estado |" >> $env:GITHUB_STEP_SUMMARY
+        echo "|----------|--------|" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 🏗️ Build | ✅ Exitoso |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 📦 Artefactos | ✅ Generados |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 🌐 Despliegue IIS | ✅ Completado |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 🔐 Permisos | ✅ Configurados |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| 🔄 IIS Reiniciado | ✅ Aplicado |" >> $env:GITHUB_STEP_SUMMARY
+        echo "| ⚙️ ASP.NET | ✅ Registrado |" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 🌐 URLs de Acceso" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Local**: http://localhost/calculadora-web/" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Con Default.aspx**: http://localhost/calculadora-web/Default.aspx" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Servidor**: http://$env:COMPUTERNAME/calculadora-web/" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 🔧 Solucion de Problemas 404" >> $env:GITHUB_STEP_SUMMARY
+        echo "Si la aplicacion muestra error 404, ejecutar en el servidor:" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo '```powershell' >> $env:GITHUB_STEP_SUMMARY
+        echo "# Reiniciar IIS" >> $env:GITHUB_STEP_SUMMARY
+        echo "iisreset /restart" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "# Registrar ASP.NET en IIS" >> $env:GITHUB_STEP_SUMMARY
+        echo 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\aspnet_regiis.exe -i' >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "# Verificar permisos" >> $env:GITHUB_STEP_SUMMARY
+        echo 'icacls "C:\inetpub\wwwroot\calculadora-web" /grant "IIS_IUSRS:(OI)(CI)RX" /T' >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "# Verificar Application Pool en IIS Manager" >> $env:GITHUB_STEP_SUMMARY
+        echo "# - .NET CLR Version: v4.0.30319" >> $env:GITHUB_STEP_SUMMARY
+        echo "# - Managed Pipeline Mode: Integrated" >> $env:GITHUB_STEP_SUMMARY
+        echo '```' >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 📋 Informacion Tecnica" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Framework**: .NET Framework 4.8" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Tipo**: ASP.NET Web Forms" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Servidor**: Windows Server 2022" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Ruta IIS**: C:\inetpub\wwwroot\calculadora-web" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Build #**: ${{ github.run_number }}" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Pagina Principal**: Default.aspx" >> $env:GITHUB_STEP_SUMMARY

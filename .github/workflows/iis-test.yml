@@ -1,0 +1,12 @@
+name: Test IIS
+on:
+  workflow_dispatch:
+jobs:
+  create_website:
+    runs-on: self-hosted
+    steps:
+      - name: Create IIS Website
+        run: |
+          Import-Module WebAdministration
+          New-Website -Name "CreatedByGHActions" -Port 80 -IPAddress 192.168.1.105 -PhysicalPath "C:\inetpub\wwwroot\test\calculadora-web" -ApplicationPool DefaultAppPool
+        shell: powershell
