@@ -6,7 +6,18 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Create IIS Website
+        if: false
         run: |
           Import-Module WebAdministration
-          New-Website -Name "CreatedByGHActions" -Port 80 -IPAddress 192.168.1.105 -PhysicalPath "C:\inetpub\wwwroot\test\calculadora-web" -ApplicationPool DefaultAppPool
+          New-Website -Name "CreatedByGHActions" -Port 80 -IPAddress 192.168.1.105 -PhysicalPath "C:\inetpub\wwwroot\test\calculadora-web" -ApplicationPool DefaultAppPool -HostHeader test.jorgegallardo.studio
+        shell: powershell
+
+      - name: Create IIS Application Pool
+        if: true
+        run: |
+          Import-Module WebAdministration
+          New-WebAppPool -Name "CreatedByGHActionsAppPool"
+          Set-ItemProperty "IIS:\AppPools\CreatedByGHActionsAppPool" -Name "managedRuntimeVersion" -Value "v4.0"
+          Set-ItemProperty "IIS:\AppPools\CreatedByGHActionsAppPool" -Name "managedPipeLineMode" -Value "Integrated"
+          Get-WebAppPool -Name "CreatedByGHActionsAppPool"
         shell: powershell
