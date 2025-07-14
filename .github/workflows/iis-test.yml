@@ -19,5 +19,5 @@ jobs:
           New-WebAppPool -Name "CreatedByGHActionsAppPool"
           Set-ItemProperty "IIS:\AppPools\CreatedByGHActionsAppPool" -Name "managedRuntimeVersion" -Value "v4.0"
           Set-ItemProperty "IIS:\AppPools\CreatedByGHActionsAppPool" -Name "managedPipeLineMode" -Value "Integrated"
-          Get-WebAppPool -Name "CreatedByGHActionsAppPool"
+          Get-WebAppPoolState -Name "CreatedByGHActionsAppPool"
         shell: powershell
