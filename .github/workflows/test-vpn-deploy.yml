@@ -17,17 +17,21 @@ jobs:
 
       - name: Deploy to server
         run: |
-          scp target\*.war Administrator@100.80.82.86:"C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
+          scp target\*.war Administrator@100.80.82.86:C:\
+          copy *.war "C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
         shell: powershell
         working-directory: proyecto-springboot
 
   deploy_iis_app:
     runs-on: self-hosted
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Deploy IIS Application
         run: |
           ssh Administrator@100.80.82.86 "mkdir C:\inetpub\wwwroot\vpn-deploy\"
-          scp -r proyecto-iis\ Administrator@100.80.82.86:"C:\inetpub\wwwroot\vpn-deploy\"
+          scp -r proyecto-iis\ Administrator@100.80.82.86:C:\
+          copy proyecto-iis\ "C:\inetpub\wwwroot\vpn-deploy\"
         shell: powershell
 
       - name: Create pool for IIS Application
