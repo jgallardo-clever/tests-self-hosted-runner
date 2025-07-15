@@ -36,10 +36,10 @@ jobs:
 
       - name: Create pool for IIS Application
         run: |
-          ssh Administrator@100.80.82.86 "Import-Module WebAdministration; New-WebAppPool -Name 'vpn-deploy-pool' -ManagedRuntimeVersion 'v4.0'"
+          ssh Administrator@100.80.82.86 "powershell -Command \"Import-Module WebAdministration; New-WebAppPool -Name 'vpn-deploy-pool' -ManagedRuntimeVersion 'v4.0'\""
         shell: powershell
 
       - name: Configure IIS Application
         run: |
-          ssh Administrator@100.80.82.86 "Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 80 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'"
+          ssh Administrator@100.80.82.86 "powershell -Command \"Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 80 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'\""
         shell: powershell
