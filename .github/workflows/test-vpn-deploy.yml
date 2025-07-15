@@ -1,0 +1,40 @@
+name: Deploy Windows Server Test VPN + Springboot APP + IIS APP
+on:
+  workflow_dispatch:
+jobs:
+
+  deploy_springboot_app:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build SpringBoot application
+        run: |
+          mvn package
+        shell: powershell
+        working-directory: proyecto-springboot
+
+      - name: Deploy to server
+        run: |
+          scp .\target\*.war Administrator@${{ github.secrets.IP_SERVER }}:"C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
+        shell: powershell
+        working-directory: proyecto-springboot
+
+  deploy_iis_app:
+    runs-on: self-hosted
+    steps:
+      - name: Deploy IIS Application
+        run: ssh Administrator@${{ github.secrets.IP_SERVER }} "mkdir C:\inetpub\wwwroot\vpn-deploy\" && scp -r .\proyecto-iis\* Administrator@${{ github.secrets.IP_SERVER }}:"C:\inetpub\wwwroot\vpn-deploy\"
+        shell: powershell
+        working-directory: proyecto-iis
+
+      - name: Create pool for IIS Application
+        run: |
+          ssh Administrator@${{ github.secrets.IP_SERVER }} "Import-Module WebAdministration; New-WebAppPool -Name 'vpn-deploy-pool' -ManagedRuntimeVersion 'v4.0'"
+        shell: powershell
+
+      - name: Configure IIS Application
+        run: |
+          ssh Administrator@${{ github.secrets.IP_SERVER }} "Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 80 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'"
+        shell: powershell
