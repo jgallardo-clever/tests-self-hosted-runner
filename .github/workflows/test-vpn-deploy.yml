@@ -27,7 +27,6 @@ jobs:
       - name: Deploy IIS Application
         run: ssh Administrator@${{ github.secrets.IP_SERVER }} "mkdir C:\inetpub\wwwroot\vpn-deploy\" && scp -r .\proyecto-iis\* Administrator@${{ github.secrets.IP_SERVER }}:"C:\inetpub\wwwroot\vpn-deploy\"
         shell: powershell
-        working-directory: proyecto-iis
 
       - name: Create pool for IIS Application
         run: |
