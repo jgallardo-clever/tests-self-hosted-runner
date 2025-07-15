@@ -17,9 +17,9 @@ jobs:
 
       - name: Deploy to server
         run: |
-          scp .\target\*.war Administrator@100.80.82.86:"C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
+          scp *.war Administrator@100.80.82.86:"C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
         shell: powershell
-        working-directory: proyecto-springboot
+        working-directory: proyecto-springboot\target
 
   deploy_iis_app:
     runs-on: self-hosted
