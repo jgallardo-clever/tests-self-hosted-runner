@@ -17,7 +17,7 @@ jobs:
 
       - name: Deploy to server
         run: |
-          scp .\target\*.war Administrator@${{ github.secrets.IP_SERVER }}:"C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
+          scp .\target\*.war Administrator@100.80.82.86:"C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
         shell: powershell
         working-directory: proyecto-springboot
 
@@ -25,15 +25,15 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Deploy IIS Application
-        run: ssh Administrator@${{ github.secrets.IP_SERVER }} "mkdir C:\inetpub\wwwroot\vpn-deploy\" && scp -r .\proyecto-iis\* Administrator@${{ github.secrets.IP_SERVER }}:"C:\inetpub\wwwroot\vpn-deploy\"
+        run: ssh Administrator@$100.80.82.86 "mkdir C:\inetpub\wwwroot\vpn-deploy\" && scp -r .\proyecto-iis\* Administrator@100.80.82.86:"C:\inetpub\wwwroot\vpn-deploy\"
         shell: powershell
 
       - name: Create pool for IIS Application
         run: |
-          ssh Administrator@${{ github.secrets.IP_SERVER }} "Import-Module WebAdministration; New-WebAppPool -Name 'vpn-deploy-pool' -ManagedRuntimeVersion 'v4.0'"
+          ssh Administrator@100.80.82.86 "Import-Module WebAdministration; New-WebAppPool -Name 'vpn-deploy-pool' -ManagedRuntimeVersion 'v4.0'"
         shell: powershell
 
       - name: Configure IIS Application
         run: |
-          ssh Administrator@${{ github.secrets.IP_SERVER }} "Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 80 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'"
+          ssh Administrator@100.80.82.86 "Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 80 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'"
         shell: powershell
