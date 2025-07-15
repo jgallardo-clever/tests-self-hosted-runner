@@ -34,3 +34,5 @@ backup_sonar.sql
 *~
 
 .vs
+target/
+obj/
