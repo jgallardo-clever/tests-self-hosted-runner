@@ -6,10 +6,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Create IIS Website
-        if: false
+        if: true
         run: |
           Import-Module WebAdministration
-          New-Website -Name "CreatedByGHActions" -Port 80 -IPAddress 192.168.1.105 -PhysicalPath "C:\inetpub\wwwroot\test\calculadora-web" -ApplicationPool DefaultAppPool -HostHeader test.jorgegallardo.studio
+          New-Website -Name "CreatedByGHActions" -Port 80 -IPAddress 192.168.10.231 -PhysicalPath "C:\inetpub\wwwroot\test\calculadora-web" -ApplicationPool DefaultAppPool -HostHeader test.jorgegallardo.studio
         shell: powershell
 
       - name: Create IIS Application Pool
