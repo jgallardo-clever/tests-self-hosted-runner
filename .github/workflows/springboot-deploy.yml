@@ -10,7 +10,7 @@ jobs:
 
       - name: Build SpringBoot application
         run: |
-          mvn clean package
+          mvn clean compile
         shell: powershell
 
       - name: Deploy to server
