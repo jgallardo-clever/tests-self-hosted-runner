@@ -1,0 +1,25 @@
+name: Deploy SpringBoot 2.5.12 App with JPA and .WAR
+on:
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build SpringBoot application
+        run: |
+          mvn clean package
+        shell: powershell
+
+      - name: Deploy to server
+        run: |
+          copy target/*.war "C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
+        shell: powershell
+
+      - name: Restart Tomcat
+        run: |
+          Stop-Service -Name "Tomcat9"
+          Start-Service -Name "Tomcat9"
+        shell: powershell
