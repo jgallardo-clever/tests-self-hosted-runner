@@ -12,11 +12,13 @@ jobs:
         run: |
           mvn clean compile
         shell: powershell
+        working-directory: proyecto-springboot
 
       - name: Deploy to server
         run: |
           copy target/*.war "C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\"
         shell: powershell
+        working-directory: proyecto-springboot
 
       - name: Restart Tomcat
         run: |
