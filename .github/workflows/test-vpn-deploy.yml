@@ -36,7 +36,7 @@ jobs:
 
       - name: Validate and create if the pool doesn't exist
         run: |
-          ssh Administrator@100.80.82.86 powershell -Command "Import-Module WebAdministration; if (-not (Get-WebAppPoolState -Name 'vpn-deploy-pool' -ErrorAction SilentlyContinue)) { New-WebAppPool -Name 'vpn-deploy-pool'; Set-ItemProperty 'vpn-deploy-pool' managedRuntimeVersion 'v4.0' }"
+          ssh Administrator@100.80.82.86 powershell -Command "Import-Module WebAdministration; if (-not (Get-IISAppPool | findstr 'vpn-deploy-pool')) { New-WebAppPool -Name 'vpn-deploy-pool'; Set-ItemProperty 'vpn-deploy-pool' managedRuntimeVersion 'v4.0' }"
 
       - name: Configure IIS Website
         run: |
