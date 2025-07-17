@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Deploy IIS Application
         run: |
-          ssh Administrator@100.80.82.86 powershell "if (Test-Path 'C:\inetpub\wwwroot\vpn-deploy\'){echo 'El directorio ya existe'} else{echo 'El directorio no existe'; mkdir C:\inetpub\wwwroot\vpn-deploy\}"
+          ssh Administrator@100.80.82.86 powershell "if (Test-Path 'C:\inetpub\wwwroot\vpn-deploy\'){Write-Host 'El directorio ya existe'} else{mkdir C:\inetpub\wwwroot\vpn-deploy\}"
           scp -r proyecto-iis\ Administrator@100.80.82.86:C:\
           ssh Administrator@100.80.82.86 powershell "Copy-Item -Path C:\proyecto-iis\ -Destination 'C:\inetpub\wwwroot\vpn-deploy\'"
         shell: powershell
