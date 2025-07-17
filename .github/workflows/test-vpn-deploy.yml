@@ -31,7 +31,7 @@ jobs:
         run: |
           ssh Administrator@100.80.82.86 powershell "if (-not (Test-Path 'C:\inetpub\wwwroot\vpn-deploy\')){mkdir C:\inetpub\wwwroot\vpn-deploy\}"
           scp -r proyecto-iis\ Administrator@100.80.82.86:C:\
-          ssh Administrator@100.80.82.86 powershell "Copy-Item -Path C:\proyecto-iis\ -Destination 'C:\inetpub\wwwroot\vpn-deploy\' -Force"
+          ssh Administrator@100.80.82.86 powershell "Copy-Item -Path C:\proyecto-iis\ -Destination 'C:\inetpub\wwwroot\vpn-deploy\' -Recurse -Force"
         shell: powershell
 
       - name: Validate and create if the pool doesn't exist
@@ -44,5 +44,5 @@ jobs:
 
       - name: Configure IIS Website
         run: |
-          ssh Administrator@100.80.82.86 powershell -Command "Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 80 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'"
+          ssh Administrator@100.80.82.86 powershell -Command "Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 8090 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'"
         shell: powershell
