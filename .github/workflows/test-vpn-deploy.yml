@@ -31,7 +31,7 @@ jobs:
         run: |
           ssh Administrator@100.80.82.86 powershell "if (-not (Test-Path 'C:\inetpub\wwwroot\vpn-deploy\')){mkdir C:\inetpub\wwwroot\vpn-deploy\}"
           scp -r proyecto-iis\ Administrator@100.80.82.86:C:\
-          ssh Administrator@100.80.82.86 powershell "Copy-Item -Path C:\proyecto-iis\ -Destination 'C:\inetpub\wwwroot\vpn-deploy\'"
+          ssh Administrator@100.80.82.86 powershell "Copy-Item -Path C:\proyecto-iis\ -Destination 'C:\inetpub\wwwroot\vpn-deploy\' -Force"
         shell: powershell
 
       - name: Create pool for IIS Application
