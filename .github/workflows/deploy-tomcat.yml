@@ -1,0 +1,45 @@
+name: Reusable Workflow for Deploying a Java Application to Tomcat
+on:
+  workflow_call:
+    inputs:
+      project_directory:
+        required: true
+        type: string
+        description: Path to the project directory on the repository
+      java_file_name:
+        required: true
+        type: string
+        description: Name of the Java file to deploy, you need to include the .jar/.war extension
+    secrets:
+      windows_user:
+        required: true
+        description: Windows user for SSH connection
+      ip_server:
+        required: true
+        description: IP address of the Windows server
+      tomcat_webapps_path:
+        required: true
+        description: Path to the Tomcat webapps directory on the Windows server
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build WAR file
+        run: |
+          echo "Building WAR file..."
+          mvn clean package
+        working-directory: ${{ inputs.project_directory }}
+
+      - name: Deploy to Tomcat using SCP from Windows Server to Windows Server 2022
+        run: |
+          echo "Deploying Java file to server..."
+          scp ${{ inputs.java_file_name }} ${{ secrets.windows_user }}@${{ secrets.ip_server }}:C:\
+          echo "Deploying Java file to Tomcat..."
+          ssh ${{ secrets.windows_user }}@${{ secrets.ip_server }} powershell -Command "Copy-Item -Path C:\${{ inputs.java_file_name }} -Destination ${{ secrets.tomcat_webapps_path}} -Force"
+          echo "Wipe C:\${{ inputs.java_file_name }} from server"
+          ssh ${{ secrets.windows_user }}@${{ secrets.ip_server }} powershell -Command "Remove-Item -Path C:\${{ inputs.java_file_name }} -Force"
+        working-directory: ${{ inputs.project_directory }}
