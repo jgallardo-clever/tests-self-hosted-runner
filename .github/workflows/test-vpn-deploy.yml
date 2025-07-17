@@ -18,7 +18,7 @@ jobs:
       - name: Deploy to server
         run: |
           scp target\*.war Administrator@100.80.82.86:C:\
-          ssh Administrator@100.80.82.86 "copy *.war 'C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\'""
+          ssh Administrator@100.80.82.86 "copy *.war 'C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\'"
         shell: powershell
         working-directory: proyecto-springboot
 
@@ -31,15 +31,15 @@ jobs:
         run: |
           ssh Administrator@100.80.82.86 "mkdir C:\inetpub\wwwroot\vpn-deploy\"
           scp -r proyecto-iis\ Administrator@100.80.82.86:C:\
-          copy proyecto-iis\ "C:\inetpub\wwwroot\vpn-deploy\"
+          ssh Administrator@100.80.82.86 "copy proyecto-iis\ 'C:\inetpub\wwwroot\vpn-deploy\'"
         shell: powershell
 
       - name: Create pool for IIS Application
         run: |
-          ssh Administrator@100.80.82.86 "powershell -Command \"Import-Module WebAdministration; New-WebAppPool -Name 'vpn-deploy-pool' -ManagedRuntimeVersion 'v4.0'\""
+          ssh Administrator@100.80.82.86 "powershell -Command \"Import-Module WebAdministration; New-WebAppPool -Name 'vpn-deploy-pool'; Set-ItemPropery 'vpn-deploy-pool' managedRuntimeVersion 'v4.0'\""
         shell: powershell
 
-      - name: Configure IIS Application
+      - name: Configure IIS Website
         run: |
           ssh Administrator@100.80.82.86 "powershell -Command \"Import-Module WebAdministration; New-Website -Name 'vpn-deploy' -Port 80 -PhysicalPath 'C:\inetpub\wwwroot\vpn-deploy' -ApplicationPool 'vpn-deploy-pool'\""
         shell: powershell
