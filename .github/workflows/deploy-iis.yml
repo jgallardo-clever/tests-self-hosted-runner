@@ -1,0 +1,64 @@
+name: Reusable Workflow for Deploying a .NET Application or Website to IIS
+on:
+  workflow_call:
+    inputs:
+      compie:
+        description: 'The solution need to be compiled'
+        required: true
+        type: boolean
+      project_directory:
+        description: 'The directory of the .NET project to build and deploy'
+        required: true
+        type: string
+      iis_site_name:
+        description: 'The name of the IIS site to deploy to'
+        required: true
+        type: string
+      iis_site_path:
+        description: 'The path to the IIS site on the server'
+        required: true
+        type: string
+      pool_name:
+        description: 'The name of the application pool to use'
+        required: true
+        type: string
+      managed_runtime_version:
+        description: 'The version of the .NET runtime to use (e.g., v4.0, v6.0)'
+        required: true
+        type: string
+      ip_host:
+        description: 'The IP address or hostname of the server where IIS is hosted'
+        required: true
+        type: string
+      ip_port:
+        description: 'The port number for the IIS server'
+        required: true
+        type: string
+      domain_name:
+        description: 'The domain name for the IIS site'
+        required: true
+        type: string
+      # Después se pueden agregar más inputs como uso máximo de cpu, configuración https, etc.
+    secrets:
+      ip_server:
+        description: 'The hostname or IP address of the IIS server'
+        required: true
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build solution
+        if: ${{ inputs.compie }}
+        run: |
+          echo "Building solution..."
+          dotnet build
+        working-directory: ${{ inputs.project_directory }}
+
+      - name: Deploy to IIS
+        run: |
+          echo "Deploying to IIS..."
+          
+        working-directory: ${{ inputs.project_directory }}
