@@ -1,0 +1,13 @@
+name: Test Docker on Windows
+on:
+  workflow_dispatch:
+jobs:
+  run-docker:
+    runs-on: self-hosted
+    steps:
+      - name: Run Docker Container
+        run: |
+          echo "Running Docker container on Windows..."
+          docker run --rm -d -p 8080:80 nginx
+          echo "Docker container is running."
+        shell: powershell
